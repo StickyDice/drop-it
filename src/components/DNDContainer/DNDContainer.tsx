@@ -1,5 +1,6 @@
 import {
   createContext,
+  MutableRefObject,
   ReactNode,
   RefObject,
   useEffect,
@@ -28,21 +29,30 @@ export const ItemCoordsContext = createContext<{
   setCoords: SetState<CoordsType>;
 }>({ coords: { x: 0, y: 0 }, setCoords: () => {} });
 
+export const SavedSortableItemsContext = createContext<
+  Map<{ x: number; y: number }, MutableRefObject<HTMLElement | null>>
+>(new Map());
+
 export default function DNDContainer(props: IProps) {
   const { children, className } = props;
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
   const [pressedObject, setPressedObject] =
     useState<RefObject<HTMLElement> | null>(null);
 
+  const sortableItemsMap = new Map<
+    { x: number; y: number },
+    MutableRefObject<HTMLElement | null>
+  >();
+
   const [filteredChildren, setFilteredChildren] = useState(children);
 
   useEffect(() => {
     const handleMouseMoveEvent = (e: MouseEvent) => {
-      if (pressedObject && pressedObject?.current) {
-        const xOffset = e.clientX - cursorPos.x;
-        const yOffset = e.clientY - cursorPos.y;
-        pressedObject.current.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
-      }
+      if (!pressedObject || !pressedObject?.current) return;
+
+      const xOffset = e.clientX - cursorPos.x;
+      const yOffset = e.clientY - cursorPos.y;
+      pressedObject.current.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
     };
 
     document.addEventListener("mousemove", handleMouseMoveEvent);
@@ -53,16 +63,18 @@ export default function DNDContainer(props: IProps) {
   });
 
   return (
-    <PressedContext.Provider value={{ pressedObject, setPressedObject }}>
-      <ItemCoordsContext.Provider
-        value={{ coords: cursorPos, setCoords: setCursorPos }}
-      >
-        <div className={className}>
-          {filteredChildren.map((child) => (
-            <DNDItem>{child}</DNDItem>
-          ))}
-        </div>
-      </ItemCoordsContext.Provider>
-    </PressedContext.Provider>
+    <SavedSortableItemsContext.Provider value={sortableItemsMap}>
+      <PressedContext.Provider value={{ pressedObject, setPressedObject }}>
+        <ItemCoordsContext.Provider
+          value={{ coords: cursorPos, setCoords: setCursorPos }}
+        >
+          <div className={className}>
+            {filteredChildren.map((child) => (
+              <DNDItem>{child}</DNDItem>
+            ))}
+          </div>
+        </ItemCoordsContext.Provider>
+      </PressedContext.Provider>
+    </SavedSortableItemsContext.Provider>
   );
 }

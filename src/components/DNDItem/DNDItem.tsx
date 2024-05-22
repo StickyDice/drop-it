@@ -1,9 +1,7 @@
 import { MouseEvent, ReactNode, useContext, useEffect, useRef } from "react";
-import {
-  ItemCoordsContext,
-  PressedContext,
-  SavedSortableItemsContext,
-} from "../DNDContainer/DNDContainer";
+import { PressedObjectContext } from "../../context/pressed-object-context";
+import { DraggingItemCoordsContext } from "../../context/dragging-item-coords-context";
+import { AllItemsCoords } from "../../context/all-items-coords";
 
 interface IProps {
   children: ReactNode;
@@ -13,9 +11,9 @@ interface IProps {
 export default function DNDItem(props: IProps) {
   const { children, className } = props;
   const itemRef = useRef<HTMLDivElement | null>(null);
-  const { setPressedObject } = useContext(PressedContext);
-  const { setCoords } = useContext(ItemCoordsContext);
-  const sortableItemsMap = useContext(SavedSortableItemsContext);
+  const { setPressedObject } = useContext(PressedObjectContext);
+  const { setCoords } = useContext(DraggingItemCoordsContext);
+  const sortableItemsMap = useContext(AllItemsCoords);
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
     setCoords({ x: e.clientX, y: e.clientY });

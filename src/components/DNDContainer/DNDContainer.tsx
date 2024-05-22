@@ -1,5 +1,4 @@
 import {
-  createContext,
   MutableRefObject,
   ReactNode,
   RefObject,
@@ -7,31 +6,14 @@ import {
   useState,
 } from "react";
 import DNDItem from "../DNDItem/DNDItem";
-import { SetState } from "../../types/set-state";
+import { PressedObjectContext } from "../../context/pressed-object-context";
+import { DraggingItemCoordsContext } from "../../context/dragging-item-coords-context";
+import { AllItemsCoords } from "../../context/all-items-coords";
 
 interface IProps {
   children: ReactNode[];
-  className: string;
+  className?: string;
 }
-
-type CoordsType = { x: number; y: number };
-
-export const PressedContext = createContext<{
-  pressedObject: RefObject<HTMLElement> | null;
-  setPressedObject: SetState<RefObject<HTMLElement> | null>;
-}>({
-  pressedObject: null,
-  setPressedObject: () => {},
-});
-
-export const ItemCoordsContext = createContext<{
-  coords: CoordsType;
-  setCoords: SetState<CoordsType>;
-}>({ coords: { x: 0, y: 0 }, setCoords: () => {} });
-
-export const SavedSortableItemsContext = createContext<
-  Map<{ x: number; y: number }, MutableRefObject<HTMLElement | null>>
->(new Map());
 
 export default function DNDContainer(props: IProps) {
   const { children, className } = props;
@@ -63,9 +45,11 @@ export default function DNDContainer(props: IProps) {
   });
 
   return (
-    <SavedSortableItemsContext.Provider value={sortableItemsMap}>
-      <PressedContext.Provider value={{ pressedObject, setPressedObject }}>
-        <ItemCoordsContext.Provider
+    <AllItemsCoords.Provider value={sortableItemsMap}>
+      <PressedObjectContext.Provider
+        value={{ pressedObject, setPressedObject }}
+      >
+        <DraggingItemCoordsContext.Provider
           value={{ coords: cursorPos, setCoords: setCursorPos }}
         >
           <div className={className}>
@@ -73,8 +57,8 @@ export default function DNDContainer(props: IProps) {
               <DNDItem>{child}</DNDItem>
             ))}
           </div>
-        </ItemCoordsContext.Provider>
-      </PressedContext.Provider>
-    </SavedSortableItemsContext.Provider>
+        </DraggingItemCoordsContext.Provider>
+      </PressedObjectContext.Provider>
+    </AllItemsCoords.Provider>
   );
 }

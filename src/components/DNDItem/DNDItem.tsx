@@ -1,7 +1,10 @@
-import { MouseEvent, ReactNode, useContext, useEffect, useRef } from "react";
-import { PressedObjectContext } from "../../context/pressed-object-context";
-import { DraggingItemCoordsContext } from "../../context/dragging-item-coords-context";
-import { AllItemsCoords } from "../../context/all-items-coords";
+import {
+  DragEvent,
+  MutableRefObject,
+  ReactNode,
+  useRef,
+  useState,
+} from "react";
 
 interface IProps {
   children: ReactNode;
@@ -11,20 +14,31 @@ interface IProps {
 export default function DNDItem(props: IProps) {
   const { children, className } = props;
   const itemRef = useRef<HTMLDivElement | null>(null);
-  const { setPressedObject } = useContext(PressedObjectContext);
-  const { setCoords } = useContext(DraggingItemCoordsContext);
-  const sortableItemsMap = useContext(AllItemsCoords);
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [pressedObject, setPressedObject] =
+    useState<MutableRefObject<HTMLDivElement | null> | null>(null);
 
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+  const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
+    if (!itemRef.current) return;
     setCoords({ x: e.clientX, y: e.clientY });
     setPressedObject(itemRef);
     if (itemRef?.current) {
       itemRef.current.style.transition = "";
       itemRef.current.style.zIndex = "10";
     }
+    const img = document.createElement("img");
+    e.dataTransfer.setDragImage(img, 0, 0);
   };
 
-  const handleMouseUp = () => {
+  const handleDrag = (e: DragEvent<HTMLDivElement>) => {
+    if (!pressedObject || !pressedObject?.current) return;
+
+    const xOffset = e.clientX - coords.x;
+    const yOffset = e.clientY - coords.y;
+    pressedObject.current.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+  };
+
+  const handleDragEnd = () => {
     setPressedObject(null);
     if (itemRef?.current) {
       itemRef.current.style.transition = "transform .3s ease-in-out";
@@ -33,24 +47,14 @@ export default function DNDItem(props: IProps) {
     }
   };
 
-  useEffect(() => {
-    if (itemRef.current) {
-      sortableItemsMap.set(
-        {
-          x: itemRef.current.clientLeft,
-          y: itemRef.current.clientTop,
-        },
-        itemRef,
-      );
-    }
-  }, [itemRef.current]);
-
   return (
     <div
       ref={itemRef}
       className={className}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDrag={handleDrag}
     >
       {children}
     </div>

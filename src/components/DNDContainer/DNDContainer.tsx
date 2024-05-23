@@ -1,4 +1,4 @@
-import { MutableRefObject, ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import DNDItem from "../DNDItem/DNDItem";
 
 interface IConatinerProps {
